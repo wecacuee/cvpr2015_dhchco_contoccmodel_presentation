@@ -1,0 +1,33 @@
+
+% \begin{tight_itemize}
+%   \item Introduce the problem
+%   \item Describe our approach
+%   \item Contrast with Milan's work
+%   \item Contrast with Andreas Geiger's work
+%   \item Highlight the contributions
+% \end{tight_itemize}
+% \vspace{10cm}
+
+        To accomplish fully or partial autonomous driving we need 3D
+        localization of traffic participants in the scene. 
+        Since laser scanners and stable wide--baseline stereo setups are
+        expensive, we focus on solving the problem using monocular video, GPS
+        and maps as our input. Given the video we extract detection bounding
+        boxes, ground plane and point tracks.
+        We formulate the problem of 3D localization in a probabilistic graphical
+        model specifically a factor graph model. We use additional heuristic
+        constraints like collision constraint, that leads to a global consistent solution.
+        Using these multiple sources of information that provide, possibly conflicting evidence about
+        the location of traffic participant, a consistent meaningful solution must be estimated. 
+        We formulate the problem in factor graph
+        formalism and use off-the-shelf methods for inference.
+
+        Our main contribution is a novel continous occlusion aware 3D object
+        modeling. This modeling is more principled than the continuous occlusion models proposed by Milan et al~\cite{Milan_etal_2014}, as our model is in 3D and derives it reasoning from fundamentals of optics. 
+         In other words, we provide a optics based
+        perspective to occlusion modeling. Also we propose a unique point
+        tracks energy that is based on reprojection error and occlusion based
+        association probability. Our experiments show that association
+        probability provides more accurate point to object association than
+        using simple bounding box based methods.
+

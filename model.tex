@@ -1,0 +1,425 @@
+\begin{frame}{Problem definition}
+  \vspace{-0.5cm}
+  \scriptsize{
+    \problemflowchartnoraw{$\{\bb{i}\}_{i,t}$}{$\{\trackp{t}\}_{j,t}$}{$\{(\hat{\mathbf{n}}_t, h_t)\}_t$}{$\{c_t\}_{t}$}{$\{L_m(t)\}_{m,t}$}{\\$\{\state{i}{t}\}^*_{i,t} = \{\dimsn{i}, \relp{i}{t}\}_{i,t}$}{$\mathbb{E}$}{}
+  }
+\end{frame}
+\begin{frame}{Graphical Model}
+  \vspace*{-.5cm}
+  \begin{center}
+      \newcommand{\imagewidth}{0.9\textwidth}
+      \input{Source/scenelayoutoverlayCity0961.tex}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Graphical Model}
+  % Introduce the graphical model with a diagram and equations
+  \begin{columns}
+  \hskip-2cm
+    \begin{column}[t]{0.9\textwidth}
+      \tikzset{/tikz/x=0.9cm,/tikz/y=0.9cm}
+      \input{Source/graphical_model_multiple_with_overlay.tex}
+    \end{column}
+    \hspace{-2cm}
+    \begin{column}[t]{0.4\textwidth}
+      \vspace{-5cm}
+      \scalebox{0.45}{
+        \newcommand{\imagewidth}{2.125\textwidth}
+        \input{Source/scenelayoutoverlayCity0961.tex}
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Graphical Model}
+  % Introduce the graphical model with a diagram and equations
+  \begin{columns}
+  \hskip-2cm
+    \begin{column}[c]{0.7\textwidth}
+        \tikzset{/tikz/x=0.7cm,/tikz/y=0.7cm}
+        \scriptsize{
+          \input{Source/graphical_model_multiple.tex}
+        }
+    \end{column}
+    \hspace{-1.5cm}
+    \vrule{}
+    \begin{column}[c]{0.6\textwidth}
+      \vspace{-1cm}
+      \begin{center}
+        \scalebox{0.45}{
+          \newcommand{\imagewidth}{2.125\textwidth}
+          \input{Source/scenelayoutoverlayCity0961.tex}
+        }
+      \end{center}
+      \tikzset{/tikz/x=0.8cm,/tikz/y=0.8cm}
+      \input{Source/graphicalmodelTP.tex}
+      \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Factorization}
+
+\begin{align*}
+  P(\{\state{i}{t}\} | \mathbb{E}) =
+  \frac{1}{Z}P( \mathbb{E} | \{\state{i}{t}\})P(\{\state{i}{t}\})&.
+\end{align*}
+\begin{multline*}
+  P(\{\state{i}{t}\} | \mathbb{E}) = \\
+  \frac{1}{Z}
+  \prod_{t=s}^{e}
+  \left(
+    \prod_{i,j: i \text{ occludes } j}
+    {\colcol\underbrace{P(\state{i}{t}, \state{j}{t})}_{\text{col}}}
+    {\colbbox\underbrace{P(\bb{i} | \state{i}{t}, \state{j}{t})}_{\text{bbox}}}
+    {\coltrack\underbrace{P(\trackp{t} | \state{i}{t}, \state{j}{t})}_{\text{track}}}
+\right)
+\\
+\left(
+  \prod_{i=1}^{N}
+  {\collane\underbrace{P(L_m(t) | \state{i}{t})}_{\text{lane}}}
+  {\coldyn\underbrace{P(\state{i}{t} | \state{i}{t-1})}_{\text{dyn}}}
+  {\colsize\underbrace{P(\state{i}{t})}_{\text{size}}}
+\right)
+  \enspace .
+\end{multline*}
+%
+
+\end{frame}
+
+
+\begin{frame}{Energy domain}
+
+\begin{multline*}
+  \hspace{-1cm}
+  -\log{P(\{\state{i}{t}\} | \mathbb{E})} = 
+  -Z' 
+  + \sum_{t=s}^{e}
+  \left(
+    \sum_{i,j:i \text{ occludes } j}   
+  \WEnergyCol 
+   + \WEnergyBBox
+   + \WEnergyTrack
+\right)
+  \\
+  + \left(
+  \sum_{i=1}^N 
+  \WEnergyLane
+  + \WEnergyDyn
+  + \WEnergySize
+\right)
+  \enspace.
+\end{multline*}
+\begin{align*}
+  \{\state{i}{t}\}^* &= \arg \min_{\{\state{i}{t}\}} - \log P(\{\state{i}{t}\} | \mathbb{E})\enspace.
+\end{align*}
+  
+\end{frame}
+
+\begin{frame}{Point Tracks energy (No Occlusion)}
+  % Start with a simpler version of point track energy here
+  \centering
+  \begin{figure}
+  \input{Source/pointTracksEnergyFigure}
+  \end{figure}
+\end{frame}
+
+% \begin{frame}{Point Tracks energy }
+%   % Add the association fraction here, which requires occlusion modeling
+% \end{frame}
+% 
+\begin{frame}{Occlusion modeling}
+  Represent traffic participants as soft ellipsoids
+  \centering
+  \input{assocprobslide.tex}
+  % Transmission probability is product integral of over the depth
+  % \[P^j_{\textit{transmission}}(\lambda) = \prod_{0}^{\lambda} (1 - \occft{\lambda \ray})^{d\lambda}\]
+  Association probability for a point $j$ with object $i$: 
+  \[\assocP = \Prefl\prod_{f}^{\lambda}\Ptransarg{\lambda \ray}^{d\lambda}\]
+\end{frame}
+
+\begin{frame}
+  \centering
+  \input{preflectiontransmissioneqns.tex}
+    \begin{align}
+      f^i_{\text{occ}}(\bx) &= \frac{1}{1 + e^{-k(1 - d(\mathbf{x},\bp^{i}))}} \\
+      P^{ij}_{\textit{reflection}} (\lambda) &= (\max \{0, \nabla {f^i_{\text{occ}}}(\lambda \ray)^\top \ray \})^2 \\
+      P^j_{\textit{transmission}}(\lambda) &= \prod_i (1 - f^i_{\text{occ}}({\lambda \ray}))
+    \end{align}
+\end{frame}
+
+\begin{frame}{Point tracks energy (With occlusion)}
+  \centering
+  \small{
+  \input{pointTrackEnergyWithOccFigure.tex}
+  \begin{align*}
+    \EnergyTrack = 
+    \sum_{i \in \text{objects}}
+    \sum_{j \in \text{points}}
+    \int_{f}^{\infty}
+      \assocP
+      %\Ereproj(\lambda)
+      \left\|\trackpj{t+1} - \projectionOft{\invProjectionOf{\trackpj{t}, \lambda}}\right\|^2
+      d\lambda
+  \end{align*}
+}
+\end{frame}
+
+\begin{frame}{Association Experiment results}
+\begin{table}
+  \centering
+  \begin{tabular}{lccc}
+    \toprule
+    Algorithm & All & Unoccluded cars & Occluded cars \\
+    \midrule
+    bounding box only                         & $0.18\pm0.01$          & $\color{red}0.04\pm0.003$  & $0.41\pm0.04$\\
+    Using $\assocP{}$                         & $0.18\pm0.01$          & $0.05\pm0.003$           & $0.39\pm0.04$ \\
+    Using $P^{(ij)}_{\text{assoc by reproj}}$ & $0.18\pm0.01$          & $0.06\pm0.003$           & $0.39\pm0.04$\\
+    Using $P^{(ij)}_{\text{assoc}}$           & $\color{red}0.17\pm0.01$ & $0.05\pm0.003$           & $\color{red}0.38\pm0.04$\\
+    \bottomrule
+  \end{tabular}
+  \caption{Error Metric: Average fraction of foreground points incorrectly associated to objects per sequence}
+  %\caption{Association Experiment results. The error is in terms of fraction of points wrongly associated with objects, hence lower is better.}
+\end{table}
+  
+\end{frame}
+
+\begin{frame}{Association Experiment results}
+
+\newlength{\tblimgwidth}
+\setlength{\tblimgwidth}{0.090\textwidth}
+\begin{figure}[!!t]
+  \centering
+  \begin{tabular}{cc@{}c@{\hspace{0.1cm}}c@{}c@{}}
+    & Associations & Association Error & Associations & Association Error\\
+    \rotatebox{90}{\hspace{1em} BBox}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_bbox2D_model-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_bbox2D_model_correct_incorrect-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_bbox2D_model-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_bbox2D_model_correct_incorrect-small.png}\\
+    \rotatebox{90}{\hspace{1em} BM}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_BroxAndMalik2010-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_BroxAndMalik2010_correct_incorrect-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_BroxAndMalik2010-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_BroxAndMalik2010_correct_incorrect-small.png}\\
+    \rotatebox{90}{\hspace{1em} RAS}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_RAS-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_RAS_correct_incorrect-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_RAS-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_RAS_correct_incorrect-small.png}\\
+    \rotatebox{90}{\hspace{1em} Ours}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_contPtTracks-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0009_0000000060_point_assign_contPtTracks_correct_incorrect-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_contPtTracks-small.png}%
+    & \includegraphics[height=\tblimgwidth]{results/0013_0000000060_point_assign_contPtTracks_correct_incorrect-small.png}
+  \end{tabular}
+  \vspace{-0.3cm}
+\label{fig:qualitative}
+\vspace{-0.3cm}
+\end{figure}
+  
+\end{frame}
+
+\begin{frame}
+\begin{table}
+\begin{tabular}{lrrrr}
+  \toprule
+  & Ours & BBox & BM & RAS\\
+  \midrule
+  Dyn. and occ. tracks        & \textbf{13.2} & 21.3 & 30.9 & 30.1 \\
+  Occluded tracks             & \textbf{15.7} & 19.8 & 39.5 & 37.8 \\
+  Dynamic tracks              & \textbf{06.6} & 11.4 & 15.3 & 17.7 \\
+  All tracks                  & \textbf{08.6} & 12.6 & 21.9 & 21.5 \\
+  \bottomrule
+\end{tabular}
+\caption{\small Mean association errors on different sets of input point tracks over all sequences of KITTI dataset. Errors are in terms of average fractions of foreground points incorrectly associated to objects per sequence.}
+\label{tab:meanAssoc}
+\end{table}
+\end{frame}
+
+% Consider packing other energies in fewer slides 
+\begin{frame}{Bounding box energy (No Occlusion)}
+  % 
+  \centering
+  \begin{figure}
+    \input{Source/car3Ddetections.tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Bounding box energy with occlusion}
+  \centering
+  \input{bboxoccfigure}
+  \begin{align}
+    \mathcal{V} &= \text{diag}([v_{AB}, v_{BC}, v_{CD}, v_{DA}])\\
+    \EnergyBBox &= \left\| \mathcal{V} \left(\projectionOf{\dimsn{i}}-\bbt{i}{t}\right) \right\|^2
+  \end{align}
+\end{frame}
+
+\begin{frame}{Lane information}
+  \begin{columns}[c]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Use OpenStreetMaps to extract lane geometry
+          \begin{itemize}
+            \item Use GPS coordinates aligned with SFM egomotion
+            \item Automatically filter out small lanes and side streets
+          \end{itemize}
+        \item Annotated lanes (to be replaced by lane detector)
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\columnwidth]{graphics/mapimg.png}
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\newcommand{\carbev}{
+  \coordinate (ra) at (1,0.2);
+  \coordinate (rb) at (2,0.7);
+  \draw [thick,blue] (ra) rectangle (rb);
+  \draw [thick,black] let \p1 = (ra), \p2 = (rb) in ($.5*(\x1, \y2) + .5*(\x1, \y1) + (-0.2,0)$) -- ($.5*(ra)+.5*(rb)$);
+}
+\begin{frame}{Lane energy}
+      \centering
+  \begin{columns}
+    \begin{column}[t]{0.5\textwidth}
+      \centering
+      Low Energy
+
+      \begin{tikzpicture}
+        \path [use as bounding box] (-.5,-0.5) rectangle (2.5,1.5);
+        \draw [thick,green] (0,0) -- (2,0);
+        \carbev
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}[t]{0.5\textwidth}
+      \centering
+      High Energy
+
+      \begin{tikzpicture}
+        \path [use as bounding box] (-.5,-0.5) rectangle (2.5,1.5);
+        \draw [thick,green] (0,0) -- (2,0);
+        \begin{scope}[rotate around={60:(1.5,0.55)}]
+          \carbev
+        \end{scope}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+  \begin{align}
+    \label{eq:laneOrientationEnergy}
+    \EnergyLane &= 
+    \sum_{m \in M_{\text{close}}}
+    (1 - \ori{i}{t} \cdot \text{TAN}(L_{m}(k), \pos{i}{t}) )
+    \LaneUncertainty{\pos{i}{t}}
+    \\
+    \LaneUncertainty{\pos{i}{t}} &=
+    \frac{1}{1 + exp(-q(w_{\text{road}} - \text{DIST}(L_{m}(k), \pos{i}{t})))}
+  \end{align}
+    
+\end{frame}
+
+\begin{frame}{Collision energy}
+  \begin{columns}
+    \begin{column}[t]{0.5\textwidth}
+      \centering
+      Low Energy
+
+      \begin{tikzpicture}
+        \path [use as bounding box] (-.5,-0.5) rectangle (2.5,1.5);
+        \draw [thick,green] (0,0) -- (2,0);
+        \carbev
+        \begin{scope}[shift={(0.9,-0.7)}]
+          \carbev
+        \end{scope}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}[t]{0.5\textwidth}
+      \centering
+      High Energy
+
+      \begin{tikzpicture}
+        \path [use as bounding box] (-.5,-0.5) rectangle (2.5,1.5);
+        \draw [thick,green] (0,0) -- (2,0);
+        \carbev
+        \begin{scope}[rotate around={-30:(1.5,0.55)},shift={(0.9,0)}]
+          \carbev
+        \end{scope}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+  \begin{align}
+    \EnergyCol &= -\log\left(
+  A_{ij}
+  e^{-\frac{1}{8}
+    \left(\pos{i}{t} - \pos{j}{t}\right)^\top
+    P^{-1}
+    \left(\pos{i}{t} - \pos{j}{t}\right)
+    }
+    \right)
+  \end{align}
+  where 
+  \begin{align}
+    A_{ij} &= \frac{|\Sigma_i|^\frac{1}{4}|\Sigma_j|^\frac{1}{4}}
+    {|P|^\frac{1}{2}}\\
+    P &= \frac{1}{2}\Sigma_i + \frac{1}{2}\Sigma_j
+  \end{align}
+\end{frame}
+
+\begin{frame}{Transition energies}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      Low Energy\\
+      \begin{tikzpicture}
+        \draw [thick,green] (0.5,0) -- (3.5,0);
+        \begin{scope}[shift={(0,0.1)},rotate around={-10:(1.5,0.55)}]
+          \carbev
+        \end{scope}
+        \begin{scope}[shift={(1.2,0)},every path/.style={dotted}]
+          \carbev
+        \end{scope}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      High Energy\\
+      \begin{tikzpicture}
+        \draw [thick,green] (0.5,0) -- (3,0);
+        \carbev
+        \begin{scope}[shift={(0.3,-0.4)},every path/.style={dotted}]
+          \carbev
+        \end{scope}
+      \end{tikzpicture}
+      
+    \end{column}
+  \end{columns}
+\begin{align}
+  \label{eq:totalPosTransitionEnergy}
+  \EnergyDynHol &= 1 - \left(\ori{i}{t-1} \cdot \frac{\pos{i}{t} - \pos{i}{t-1}}{\|\pos{i}{t} - \pos{i}{t-1}\|})\right)^2 \\
+  \EnergyDynOri &= \|\ori{i}{t} - \ori{i}{t-1}\|^2\\ 
+  \EnergyDynVel &= \|(\pos{i}{t} - 2\pos{i}{t-1}) + \pos{i}{t-2}\|^2
+\end{align}
+\end{frame}
+
+
+\begin{frame}{Size prior}
+  \input{sizefigures}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      Low Energy\\
+      \goodsizeconfig
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+      \centering
+      High Energy\\
+      \badsizeconfig
+    \end{column}
+  \end{columns}
+\begin{align}
+  \label{eq:totalSizeEnergy}
+  \EnergySize &= (\dimsn{i} - \expDimsn)^\top\Sigma_{\expDimsn}^{-1}(\dimsn{i} -
+  \expDimsn)
+\end{align}
+\end{frame}

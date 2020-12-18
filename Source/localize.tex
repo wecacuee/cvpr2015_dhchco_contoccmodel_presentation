@@ -1,0 +1,311 @@
+With the understanding of our occlusion aware 3D representation of objects, we are know in position to describe the energies that we defined in Chapter~\ref{sec:setup}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Point tracks energy with occlusion}
+\label{sec:totalContPtTracksEnergy}
+We model continuous point tracks energy with explicit occlusion reasoning as
+the expected re-projection error over the association probability,
+
+\begin{align}
+  \Energy{track}(\{ \relp{i}{t} \}_i, \{ \relp{i}{t-1} \}_i, \{\dimsn{i}\}_i ) = 
+    \sum_{i=1}^{N} 
+    %\sum_{t = s_i}^{e_i}
+    \sum_{j = 1}^{M}
+    \int_1^\infty \assocP\Ereproj(\lambda) d\lambda
+\end{align}
+where $\assocP$ is the association probability of
+$j$\textsuperscript{th} point with $i$\textsuperscript{th} TP at depth $\lambda$, $\{ \relp{i}{t} \}_i$ are the poses of all occluding objects at time $t$, $ \{ \dimsn{i} \}_i$ are the dimensions of all objects that occlude $i$
+and $\Ereproj(\lambda)$ is the re-projection error given by
+%
+\begin{align}
+  \assocP &= \Prefl\Ptrans\\
+  \Ereproj(\lambda) &= \left\|\trackpj{t} - \projectionOf{\invProjectionOftm{\trackpj{t-1}, \lambda}}\right\|^2 .
+  \label{eq:reprojerror}
+\end{align}
+
+The  $\projectionOf{.}$ and $\invProjectionOftm{.}$ denote the projection and
+inverse projection functions that project 3D point to camera image and vice
+versa. Note that inverse projection $\invProjectionOf{.}$ depend on both the
+point $\trackp{t}$ and the unknown depth $\lambda$. Also note that the inverse projection is dependent on TP pose at time $t-1$ while the projection depends on pose at time $t$ which can be different.
+
+\begin{comment}
+  \subsection{Occupancy function}
+  Assuming occupancy to be a
+  probability distribution over 3D space. For each TP the
+  occupancy is modeled as a logistic function 
+  \begin{align}
+     \occf = L(\mathbf{x}; \pos{i}{t}, \Sigma_i)
+  \end{align}
+  where $L(.)$ is the logistic function defined by
+  \begin{align}
+    L(\mathbf{x}; \pos{i}{t-1}, \Sigma_i) = \frac{1}{
+      1 + e^{-k(1 - d(\mathbf{x},\pos{i}{t-1}))}
+      }
+  \end{align}
+  where $d(\mathbf{x},\pos{i}{t-1}) =
+  (\mathbf{x}-\pos{i}{t-1})^\top\Sigma_i(\mathbf{x}-\pos{i}{t-1})$ and $k =
+  10\ln{49}$. $k$ is chosen such that $L(.) = 0.98$ when $d(.) =
+  0.9$
+  % Once we have our distribution over $\lambda$, $\lambdadist$ we can compute the
+  % reprojection of $\trackpj{t-1}$ over image in time $t$ as a function of
+  % $\lambda$. Let
+\end{comment}
+
+
+\begin{comment}
+  \subsection{Approximations}
+  Reflection probability of $i$th TP is easy to compute
+  analytically 
+  \begin{multline}
+    \Prefl =
+    (\max \{ 0, \nabla \occf^\top \ray \})^2 \\
+    = (\max \{ 0, \nabla \occfxi^\top\ray \})^2
+    \label{eq:analytic-prefl}
+  \end{multline}
+  where 
+  \begin{multline}
+    \nabla \occfxi^\top\ray \\=
+    \nabla k\dishort \sech^2\left(\frac{k}{2}\dishort\right)
+  \end{multline}
+  where $\dishort = 1-d(\mathbf{x}, \pos{i}{t-1})$ is a signed distance measure
+  from the contour of the ellipsoid where $d(\mathbf{x}, \pos{i}{t-1})$ is 1.
+
+  However, the transmission probability needs to be approximated.  
+  %
+  % \subsection{Computing $\Prefl$ and $\Ptrans$}
+  % Focusing on  $\nabla \occfxi$ 
+  % 
+  % \begin{multline}
+  %   \nabla \occfxi =\\
+  %   \frac{-k\nabla d(\mathbf{x}, \pos{i}{t-1})e^{-k(1-d(\mathbf{x}, \pos{i}{t-1}))}}{
+  %     (1 + e^{-k(1-d(\mathbf{x}, \pos{i}{t-1}))})^2
+  %   } \\ 
+  %   = -k\nabla d(\mathbf{x}, \pos{i}{t-1})\sech^2\left(\frac{k}{2}(1-d(\mathbf{x},
+  %   \pos{i}{t-1}))\right)
+  %   \\
+  %   = \nabla k\dishort \sech^2\left(\frac{k}{2}\dishort\right)
+  % \end{multline}
+  % where $\dishort = 1-d(\mathbf{x}, \pos{i}{t-1})$ is a signed distance measure
+  % from the contour of the ellipsoid where $d(\mathbf{x}, \pos{i}{t-1})$ is 1.
+  % Focusing on $\nabla d(.)$
+  % 
+  % \begin{align}
+  %   \nabla d(\mathbf{x}, \pos{i}{t-1}) = 2\Sigma_i(\mathbf{x} - \pos{i}{t-1})
+  % \end{align}
+  % Back to \eqref{eq:analytic-prefl}
+  % 
+  % \begin{multline}
+  %   (\max \{ 0, \nabla \occf^\top \ray \})^2 = \\
+  %   \sech^4\left(\frac{k}{2}\dishort\right) 
+  %   (\max \{ 0 , \nabla k\dishort^\top\ray\})^2
+  % \end{multline}
+  % 
+  % The probability is simply $\sech^2(.)$ scaled by gradient of ellipsoid
+  % $\nabla k\dishort$ projected in the ray direction $\ray$.
+  % 
+  % \begin{align}
+  %   \Ptrans = 
+  %   e^{\int_{1}^{\lambda} \ln{(1 - f_{occ}(\lambda \ray))}{d\lambda}}
+  % \end{align}
+  % \begin{multline}
+  % \int_{1}^{\lambda} \ln{(1 - f_{occ}(\lambda \ray))}{d\lambda}
+  % =  \\
+  % \int_{1}^{\lambda} \ln{\left(1 - \sum_i \occfi\right)}{d\lambda}
+  % \end{multline}
+  % 
+  % The above integral is very difficult to approximate or compute analytically.
+  So based on intuition, we approximate the $\Ptrans$ by following function
+  \begin{align}
+  \label{eq:evalCumulativePtrans}
+    \Ptrans &= \prod_i L_u(\mathbf{u}, \mu^i_u,\Sigma^i_u)L_{\lambda}(\lambda; \mu^i_d)\\
+    L_u(\mathbf{u}, \mu^i_u,\Sigma^i_u) &= \frac{1}{
+      1 + e^{-k_u(1 - (\mathbf{u} - \mu^i_u)^\top\Sigma^i_u(\mathbf{u} -
+      \mu^i_u))}
+    }
+    \\
+    L_{\lambda}(\mathbf{u}, \lambda; \mu^i_d) &= \frac{1}{
+    1 + e^{-k_d(\lambda - \mu^i_d(\mathbf{u}))}
+  }
+  \end{align}
+  where 
+  \begin{align}
+    \mu_u^i &= \projectionOf{\pos{i}{t-1}} \label{eq:muiudef}\\
+    \Sigma_u^i &= \projectionOf{\Sigma_i} \label{eq:sigmauidef}\\
+    \mu^i_d(\mathbf{u}) &= \relp{i}{t}\\
+    k_u &= 10\log(49)\\
+    k_d &= \frac{\log(49)}{\sqrt{h^2 + l^2 + w^2}}
+    \label{eq:ptransmissionInit}
+  \end{align}
+  is the distance of the centre of the TP from the camera.
+
+  % $\mu^i_d(\mathbf{u}) = \min_{\lambda} d^2_i(\lambda K^{-1}\mathbf{u})$.
+  % $\mu^i_d(\mathbf{u})$ is the closest point to the unit contour of ellipsoid.
+  % If there are multiple such points, the point closest to the camera is taken as
+  % $\mu^i_d(\mathbf{u})$
+
+  The association probability becomes
+
+  \begin{multline}
+    \assocP = 
+      \sech^4\left(\frac{k}{2}\dishort\right)
+      (\max \{ 0, \nabla k\dishort^\top\ray \})^2\\
+    \prod_i \Lu
+      \Llambda \\
+      \label{eq:assocCoeffEval}
+  \end{multline}
+
+  So the energy becomes
+
+  \begin{multline}
+    \label{eq:integrand}
+    \Energy{track}(.) = 
+      \sum_{i = 1}^N
+      \sum_{j = 1}^{M}
+      \int_1^{\infty}
+      \assocP
+      \Ereproj(\lambda)
+      d\lambda
+  \end{multline}
+  where $x = \lambda \ray$ and $\Ereproj(\lambda) = \|\trackpj{t} -
+  f^i_{reproj}(\trackpj{t-1}, \lambda)\|^2$ is reprojection error which is a
+  quadratic in $\lambda$
+
+  The integral in the above expression is computed numerically.
+\end{comment}
+
+\section{Object detection energy}
+
+We model object detection energy as the norm of difference in the coordinates
+of the projected bounding box and detected bounding box. The detected bounding
+box is represented by the extrema along X and Y dimensions $\bb{i} = [\xmin,
+\ymin, \xmax, \ymax]^\top$. If $\dimsn{i} = [l, w, h]^\top$ represent the 3D
+dimensions of the traffic participant along the X, Y and Z dimensions then we 
+can compute the eight corners of the cuboid model in the tracklet coordinate transform as
+
+\begin{align}
+  X^{(i)}_{\text{cuboid}} &= \dimsn{i}{}^\top C_u \\
+  \text{where} &\\
+  C_u &= 
+  \begin{bmatrix}
+  0.5 & 0.5 & -0.5 & -0.5 & 0.5 & 0.5 & -0.5 & -0.5 \\
+    0.5 & -0.5 & -0.5 & 0.5 & 0.5 & -0.5 & -0.5 & 0.5 \\
+    0 & 0 & 0 & 0 & 1  & 1 & 1 & 1
+  \end{bmatrix} \enspace .
+\end{align}
+These cuboid points can be projected to the camera image plane to get the projected bounding box,
+\newcommand{\ucub}{U^{(i)}(t)}
+\newcommand{\ucubx}{U_{(1,:)}^{(i)}(t)}
+\newcommand{\ucuby}{U_{(2,:)}^{(i)}(t)}
+\newcommand{\estbb}{\hat{\mathbf{d}}^{(i)}(t)}
+\begin{align}
+  \ucub &= \projectionOf{\dimsn{i}{}^\top C_u}\\
+  \estbb &= [\min \ucubx, \min \ucuby, \max \ucubx, \max \ucuby]^\top \enspace .
+\end{align}
+We take $\estbb$ as the projected bounding box. The object detection energy is
+taken to be the euclidean distance between projected and detected bounding box.
+\begin{align}
+  \EnergyBBox &= \| \estbb - \bb{i}\|^2_2
+\end{align}
+With slight abuse of notation for projection operator we write this energy as
+\begin{align}
+  \EnergyBBox &= \left\| \projectionOf{\dimsn{i}} - \bb{i}\right\|^2_2 \enspace.
+\end{align}
+
+For object detections we use object detector by \cite{Felzenszwalb_etal_2010}
+which is detector by parts model and we use eight parts to train the car model 
+on half of the KITTI dataset \cite{geiger2013vision}. The trained modeled is 
+used to get detections for the other half of the dataset and vice versa.
+
+\section{Lane energy}
+\label{sec:laneEnergy}
+ The lanes are modeled as splines. Here we assume that the confidence in lane
+ detection is decreases as the distance from the lane center increases.  The
+ energy is given by the dot product between car orientation and tangent to the
+ lane at that point.
+
+\begin{align}
+  \label{eq:laneOrientationEnergy}
+  \Energy{lane} = 
+  \sum_{m \in M_{\text{close}}}
+  (1 - \ori{i}{t} \cdot \text{TAN}(L_{m}(k), \pos{i}{t}) )
+\LaneUncertainty{\pos{i}{t}}
+\end{align}
+where $M_{\text{close}} = \{m : \text{DIST}(L_{m}(k), \pos{i}{t}) < d_{\text{thresh}}\} $ is
+the set of nearby lanes close to the object by a certain distance threshold $d_{\text{thresh}}$ and 
+\begin{align}
+\LaneUncertainty{\pos{i}{t}} = 
+  \frac{1}{1 + \exp(-q(w_{\text{road}} - \text{DIST}(L_{m}(k), \pos{i}{t})))}
+\end{align}
+for some constant $w_{\text{road}}$ that represents the width of the road.
+
+\section{Transition probability}
+Dynamics constraints should not only enforce smooth trajectories, but also the
+holonomic constraints.  The following energy adds a penalty if the change in
+position is not in direction of previous orientation.
+
+\begin{align}
+  \label{eq:totalPosTransitionEnergy}
+  \Energy{dyn-hol} = 1 - \ori{i}{t-1} \cdot (\pos{i}{t} - \pos{i}{t-1})
+\end{align}
+
+The following energy adds a penalty for change in position and orientation
+but a penalty for change in velocity is much better approximation. However, in
+a Markovian setting that would mean extending the state space of the car to
+include velocity.
+
+\begin{align}
+  \Energy{dyn-ori} &= \|\ori{i}{t} - \ori{i}{t-1}\|^2\\
+  \Energy{dyn-vel} &= \|(\pos{i}{t} - 2\pos{i}{t-1}) + \pos{i}{t-2}\|^2
+\end{align}
+
+As a result the dynamics are modeled by weighted combination of holonomic
+constraint and smoothness constraints.
+
+\begin{align}
+  \WEnergy{dyn} &= \WEnergy{dyn-hol} + \WEnergy{dyn-ori} + \WEnergy{dyn-vel}
+\end{align}
+
+ 
+\section{Collision energy}
+
+Bhattacharya coefficient $\int_a^b\sqrt{p(x)q(x)}dx$ is a measure of similarity
+of two distributions $p(x)$ and $q(x)$. If we represent TPs as gaussians in
+Birds eye view (BEV), then similarity is a measure of collision. Exactly
+overlapping distribution results in coefficient as 1. 
+%The analytical form of
+%Bhattacharya coefficient has been taken from
+%\url{http://like.silk.to/studymemo/PropertiesOfMultivariateGaussianFunction.pdf}
+
+\begin{align}
+  \label{eq:collisionEnergyHellingerDistance}
+  \EnergyCol =
+  -\log\left(
+  A_{ij}
+  e^{-\frac{1}{8}
+    \left(\pos{i}{t} - \pos{j}{t}\right)^\top
+    P^{-1}
+    \left(\pos{i}{t} - \pos{j}{t}\right)
+    }
+    \right)
+\end{align}
+where 
+\begin{multline}
+  A_{ij} = \frac{|\Sigma_i|^\frac{1}{4}|\Sigma_j|^\frac{1}{4}}{|P|^\frac{1}{2}}, \hfill
+  P = \frac{1}{2}\Sigma_i + \frac{1}{2}\Sigma_j, \hfill
+\Sigma_i^{-1} = R^\top_{\ori{i}{t}} \begin{bmatrix} 2/l_i & 0 \\ 0 & 2/w_i \end{bmatrix}
+R_{\ori{i}{t}}
+\end{multline}
+
+
+\section{Size Prior}
+
+Prior can include among many other things the size prior on the car.
+
+\begin{align}
+  \label{eq:totalSizeEnergy}
+  \Energy{size} &= (\dimsn{i} - \expDimsn)^\top\Sigma_{\expDimsn}^{-1}(\dimsn{i} -
+  \expDimsn)
+\end{align}
+
+where $\expDimsn$ is the mean TP dimensions and
+$\Sigma_{\expDimsn}$ is the correspondence covariance matrix.
